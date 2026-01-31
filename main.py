@@ -1,74 +1,50 @@
-import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import cv2
-import numpy as np
-from PIL import Image
-import io
+import telebot
+import time
 import random
+from datetime import datetime
 
-TOKEN = "8526473393:AAGxAQw6UirRmGQxcWoL5oTVCeDemSfsnHw"
+TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+bot = telebot.TeleBot(TOKEN)
 
-def start(update, context):
-    update.message.reply_text(
-        "📈 OTC Sniper Bot Active\n\n"
-        "Send me a Pocket Option chart screenshot.\n"
-        "I will analyze and send CALL / PUT with expiry."
-    )
+pairs = ["EURUSD OTC","GBPUSD OTC","USDJPY OTC","EURJPY OTC"]
+timeframes = ["15s","30s"]
 
-def analyze_image(image):
-    img = np.array(image.convert('L'))
-    brightness = np.mean(img)
+def generate_signal():
+    pair = random.choice(pairs)
+    tf = random.choice(timeframes)
+    direction = random.choice(["CALL","PUT"])
+    probability = random.randint(75,92)
 
-    if brightness > 130:
-        direction = "PUT"
-    else:
-        direction = "CALL"
+    expiry = "15 seconds" if tf == "15s" else "30 seconds"
 
-    probability = random.randint(68, 84)
-    expiry = random.choice(["15s", "30s"])
+    reason = "RSI oversold + Sniper candle rejection"
 
-    reasons = [
-        "RSI divergence",
-        "Stochastic cross",
-        "Sniper rejection",
-        "Trend exhaustion",
-        "Liquidity grab"
-    ]
+    msg = f"""
+🎯 *OTC SNIPER SIGNAL*
 
-    chosen = random.sample(reasons, 3)
-    return direction, expiry, probability, chosen
+📊 Pair: {pair}
+⏱ Timeframe: {tf}
+📈 Direction: {direction}
+⏳ Expiry: {expiry}
+📊 Probability: {probability}%
 
-def handle_image(update, context):
-    photo = update.message.photo[-1].get_file()
-    img_bytes = photo.download_as_bytearray()
-    image = Image.open(io.BytesIO(img_bytes))
+📌 Reason:
+{reason}
 
-    direction, expiry, probability, reasons = analyze_image(image)
+🕒 {datetime.now().strftime('%H:%M:%S')}
+    """
+    return msg
 
-    text = f"""
-📊 OTC SNIPER SIGNAL
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.reply_to(message,"🔥 OTC Sniper Bot Activated!\nSend /signal to receive trades.")
 
-📍 Signal: {direction}
-⏱ Expiry: {expiry}
-🎯 Probability: {probability}%
+@bot.message_handler(commands=['signal'])
+def send_signal(message):
+    bot.send_message(message.chat.id, generate_signal(), parse_mode="Markdown")
 
-📌 Reasons:
-• {reasons[0]}
-• {reasons[1]}
-• {reasons[2]}
-"""
-
-    update.message.reply_text(text)
-
-def main():
-    updater = Updater(TOKEN, use_context=True)
-    dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.photo, handle_image))
-
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == "__main__":
-    main()
+while True:
+    try:
+        bot.polling()
+    except:
+        time.sleep(5)
