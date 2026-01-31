@@ -3,7 +3,7 @@ import time
 import random
 from datetime import datetime
 
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+TOKEN = "8526473393:AAGxAQw6UirRmGQxcWoL5oTVCeDemSfsnHw"
 bot = telebot.TeleBot(TOKEN)
 
 pairs = ["EURUSD OTC","GBPUSD OTC","USDJPY OTC","EURJPY OTC"]
