@@ -1,6 +1,6 @@
-BOT_TOKEN = "8526473393:AAGxAQw6UirRmGQxcWoL5oTVCeDemSfsnHw"
+import os
 
-TIMEFRAME = "15s"
-MARKET = "OTC"
-SIGNAL_MODE = "A"
-PORT = 8080
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+TIMEFRAME = os.getenv("TIMEFRAME", "15s")
+MARKET = os.getenv("MARKET", "OTC")
+SIGNAL_MODE = os.getenv("SIGNAL_MODE", "A")
