@@ -1,1 +1,4 @@
-pyTelegramBotAPI
+python-telegram-bot
+opencv-python
+pillow
+numpy
