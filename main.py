@@ -3,7 +3,7 @@ import os
 import random
 from datetime import datetime
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.getenv("8526473393:AAGxAQw6UirRmGQxcWoL5oTVCeDemSfsnHw")
 bot = telebot.TeleBot(TOKEN)
 
 pairs = [
