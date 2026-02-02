@@ -1,7 +1,11 @@
-import telebot
 import os
-import random
-from datetime import datetime
+import logging
+import requests
+import cv2
+import numpy as np
+from PIL import Image
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 TOKEN = os.getenv("8526473393:AAGxAQw6UirRmGQxcWoL5oTVCeDemSfsnHw")
 bot = telebot.TeleBot(TOKEN)
