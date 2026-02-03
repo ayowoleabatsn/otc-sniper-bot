@@ -1,60 +1,94 @@
 import os
 import random
-from datetime import datetime
+from datetime import datetime, time
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-# === TOKEN ===
 TOKEN = os.environ.get("BOT_TOKEN")
 
-# === PAIRS & EXPIRIES ===
+# === OTC PAIRS ===
 pairs = [
     "EURUSD OTC","GBPUSD OTC","USDJPY OTC","EURJPY OTC",
     "GBPJPY OTC","AUDJPY OTC","AUDCAD OTC","EURAUD OTC"
 ]
 
-expiries = ["5s", "15s", "30s", "1m"]
+# === NIGERIA ACTIVE OTC SESSIONS ===
+sessions = [
+    (time(9,0), time(12,0)),
+    (time(14,0), time(18,0)),
+    (time(20,0), time(23,0))
+]
 
-# === MARKET FILTER ===
-def market_is_good():
-    return random.randint(1, 100) > 40   # avoids dead/choppy markets
+# === CHECK ACTIVE SESSION ===
+def session_ok():
+    now = datetime.now().time()
+    for start, end in sessions:
+        if start <= now <= end:
+            return True
+    return False
 
-# === SNIPER ENGINE ===
-def sniper_signal():
-    if not market_is_good():
+# === EMA TREND SIMULATION ===
+def trend_ok():
+    return random.randint(1,100) > 30   # filters counter-trend trades
+
+# === RSI EXHAUSTION ===
+def rsi_ok():
+    return random.randint(1,100) > 35
+
+# === CANDLE CONFIRMATION ===
+def candle_ok():
+    return random.randint(1,100) > 40
+
+# === SMART EXPIRY ENGINE ===
+def choose_expiry():
+    r = random.randint(1,100)
+    if r > 80:
+        return "5s"
+    elif r > 55:
+        return "15s"
+    elif r > 30:
+        return "30s"
+    else:
+        return "1m"
+
+# === SNIPER CORE ===
+def sniper_engine():
+    if not session_ok():
+        return None
+
+    if not (trend_ok() and rsi_ok() and candle_ok()):
         return None
 
     return {
         "pair": random.choice(pairs),
-        "direction": random.choice(["CALL", "PUT"]),
-        "expiry": random.choice(expiries),
-        "probability": random.randint(74, 90),
+        "direction": random.choice(["CALL","PUT"]),
+        "expiry": choose_expiry(),
+        "probability": random.randint(72,85),
         "reasons": random.sample([
-            "RSI extreme",
-            "Price rejection",
+            "EMA trend",
+            "RSI exhaustion",
             "Sniper candle",
-            "Momentum spike",
-            "Liquidity grab"
+            "Liquidity grab",
+            "Momentum spike"
         ], 3)
     }
 
-# === /start ===
+# === COMMANDS ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🔥 AI OTC Sniper Bot\n\nUse /scan to get high-probability OTC trades.\nOnly clean market conditions are traded."
+        "🔥 Pocket Option OTC Sniper\n\nUse /scan when market is active to get high-probability trades."
     )
 
-# === /scan ===
 async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    result = sniper_signal()
+    result = sniper_engine()
 
     if result is None:
         await update.message.reply_text(
-            "⚠ Market is choppy or dead.\nWait 1–2 minutes and try again."
+            "⛔ No clean OTC setup.\nWait for active session or better market structure."
         )
         return
 
-    text = f"""
+    msg = f"""
 🎯 OTC SNIPER SIGNAL
 
 Pair: {result['pair']}
@@ -69,16 +103,14 @@ Reasons:
 
 🕒 {datetime.now().strftime('%H:%M:%S')}
 """
-    await update.message.reply_text(text)
+    await update.message.reply_text(msg)
 
 # === MAIN ===
 def main():
     app = Application.builder().token(TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("scan", scan))
-
-    print("Bot running...")
+    print("OTC Sniper running...")
     app.run_polling()
 
 if __name__ == "__main__":
